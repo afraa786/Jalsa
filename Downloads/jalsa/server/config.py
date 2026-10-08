@@ -25,6 +25,10 @@ PLACES = [
 # These are configurable example festival dates for the project.
 # Verify dates before using them in an academic report.
 FESTIVALS = {
+    **{
+        date(2026, 10, day): ("Navratri", 0.85)
+        for day in range(11, 20)
+    },
     date(2026, 11, 8): ("Diwali", 1.00),
     date(2026, 11, 9): ("Diwali Holiday", 0.85),
 }

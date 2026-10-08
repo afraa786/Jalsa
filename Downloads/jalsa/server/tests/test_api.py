@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from fastapi.testclient import TestClient
 
@@ -20,6 +20,17 @@ def test_zones():
         assert "zones" in body
         assert "places" in body
         assert "levels" in body
+
+
+def test_navratri_is_listed_for_nine_consecutive_days():
+    with TestClient(api.app) as client:
+        response = client.get("/festivals", params={"upcoming_only": "false"})
+        assert response.status_code == 200
+        navratri = [item for item in response.json() if item["name"] == "Navratri"]
+
+    assert len(navratri) == 9
+    dates = [date.fromisoformat(item["date"]) for item in navratri]
+    assert dates == [date(2026, 10, 11) + timedelta(days=offset) for offset in range(9)]
 
 
 def test_predict():
