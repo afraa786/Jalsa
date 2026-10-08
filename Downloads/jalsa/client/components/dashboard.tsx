@@ -6,10 +6,10 @@ import type { CrowdLevel, Festival, Heatmap, HourForecast, Prediction } from "@/
 
 const LEVELS: CrowdLevel[] = ["Low", "Moderate", "High", "Very High"];
 const LEVEL_COLORS: Record<CrowdLevel, string> = {
-  Low: "#4f9cf5",
-  Moderate: "#51c288",
-  High: "#f2b84b",
-  "Very High": "#ef6a63",
+  Low: "#69212c",
+  Moderate: "#8c2432",
+  High: "#b32d3d",
+  "Very High": "#d74755",
 };
 
 const formatDate = (value: string) =>
@@ -110,29 +110,7 @@ export function Dashboard() {
   const peak = useMemo(() => forecast?.hourly.reduce((best, item) => item.expected_crowd > best.expected_crowd ? item : best, forecast?.hourly[0]), [forecast]);
 
   return (
-    <main>
-      <header className="topbar">
-        <a className="brand" href="#top" aria-label="JALSA home">
-          <span className="brand-mark">J</span>
-          <span>JALSA</span>
-        </a>
-        <nav><a href="#forecast">Forecast</a><a href="#heatmap">Heatmap</a><a href="#methodology">Methodology</a></nav>
-        <span className="status"><i /> Live model</span>
-      </header>
-
-      <section className="hero" id="top">
-        <div>
-          <p className="eyebrow">Crowd intelligence, made visible</p>
-          <h1>Know when the<br /><em>city gets busy.</em></h1>
-          <p className="lede">Explore expected crowd intensity by place, hour, and day. JALSA combines model forecasts with transparent, place-level observations.</p>
-        </div>
-        <div className="hero-stat">
-          <span>Current signal</span>
-          <strong>{currentHour?.expected_crowd ?? "—"}<small>%</small></strong>
-          <LevelPill level={currentHour?.level ?? "Low"} />
-        </div>
-      </section>
-
+    <div className="dashboard">
       <section className="controls" aria-label="Forecast controls">
         <label>Zone<select value={zone} onChange={(event) => setZone(event.target.value)}>{zones.map((item) => <option key={item} value={item}>{item.replaceAll("_", " ")}</option>)}</select></label>
         <label>Date<input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} /></label>
@@ -189,12 +167,16 @@ export function Dashboard() {
               <div className="heatmap-grid">
                 <span className="corner">Date</span>
                 {heatmap?.data[0]?.hours.map((hour) => <span key={hour} className="hour-label">{hour}</span>)}
-                {heatmap?.data.map((day) => <div className="row" key={day.date}><span>{formatDate(day.date).split(" ")[0]}<small>{day.date.slice(8)}</small></span>{day.expected_crowd.map((value, index) => <i key={index} style={{ background: `rgba(79,156,245,${0.14 + value / 100 * 0.75})` }} title={`${value}%`} />)}</div>)}
+                {heatmap?.data.map((day) => <div className="row" key={day.date}><span>{formatDate(day.date).split(" ")[0]}<small>{day.date.slice(8)}</small></span>{day.expected_crowd.map((value, index) => <i key={index} style={{ background: `rgba(175,38,54,${0.14 + value / 100 * 0.75})` }} title={`${value}%`} />)}</div>)}
               </div>
             </div>
           </section>
         </>
       )}
+
+      <section className="about-image" aria-label="Why crowd awareness matters">
+        <p>Knowing when an area is busy helps you plan when and where to go.</p>
+      </section>
 
       <section className="methodology" id="methodology">
         <div><span className="eyebrow">About the signal</span><h2>Transparent by design.</h2></div>
@@ -202,6 +184,6 @@ export function Dashboard() {
       </section>
 
       <footer><strong>JALSA</strong><span>Crowd intelligence without pretending to be exact.</span><span>© {new Date().getFullYear()}</span></footer>
-    </main>
+    </div>
   );
 }

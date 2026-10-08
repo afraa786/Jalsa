@@ -2,7 +2,11 @@ import type {
   DayForecast,
   Festival,
   Heatmap,
+  LogReadingInput,
+  LogReadingResult,
+  ModelMetrics,
   Prediction,
+  ServiceHealth,
   ZoneInfo,
 } from "@/types/jalsa";
 
@@ -40,6 +44,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const getZones = () => request<ZoneInfo>("/zones");
 export const getFestivals = () => request<Festival[]>("/festivals");
+export const getHealth = () => request<ServiceHealth>("/health");
+export const getMetrics = () => request<ModelMetrics>("/metrics");
 export const getForecast = (zone: string, date: string, rain: boolean) =>
   request<DayForecast>(`/forecast/day?zone=${encodeURIComponent(zone)}&date=${date}&rain=${rain}`);
 export const getPrediction = (zone: string, date: string, hour: number, rain: boolean) =>
@@ -49,3 +55,7 @@ export const getPrediction = (zone: string, date: string, hour: number, rain: bo
   });
 export const getHeatmap = (zone: string, start: string, days: number, rain: boolean) =>
   request<Heatmap>(`/forecast/heatmap?zone=${encodeURIComponent(zone)}&start=${start}&days=${days}&rain=${rain}`);
+export const logReading = (reading: LogReadingInput) =>
+  request<LogReadingResult>("/log", { method: "POST", body: JSON.stringify(reading) });
+export const retrainModel = () =>
+  request<{ status: string }>("/retrain", { method: "POST" });

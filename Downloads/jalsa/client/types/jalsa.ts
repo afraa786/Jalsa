@@ -58,3 +58,37 @@ export interface Heatmap {
   rain: boolean;
   data: HeatmapDay[];
 }
+
+export interface ServiceHealth {
+  status: string;
+  model_loaded: boolean;
+  model_exists: boolean;
+}
+
+export interface ModelMetrics {
+  model: string;
+  task: string;
+  classes: CrowdLevel[];
+  synthetic_training_rows: number;
+  real_data_rows: number;
+  real_data_blended: boolean;
+  real_data_weight: number;
+  test_rows: number;
+  accuracy: number;
+  features: string[];
+  note: string;
+}
+
+export interface LogReadingInput {
+  place: string;
+  live_pct: number;
+  zone?: string;
+}
+
+export interface LogReadingResult {
+  saved: boolean;
+  place: string;
+  zone: string;
+  live_pct: number;
+  timestamp: string;
+}
