@@ -100,6 +100,22 @@ http://localhost:3000
 http://127.0.0.1:3000
 ```
 
+## 8. Docker deployment
+
+From the `server` directory, build and run the API:
+
+```bash
+docker build -t jalsa-api .
+docker run --rm -p 8000:8000 \
+  -e JALSA_FRONTEND_ORIGIN=https://your-frontend.example \
+  -v jalsa-data:/app/data \
+  jalsa-api
+```
+
+Open `http://localhost:8000/docs` to check the API. The image uses Python 3.12, installs the XGBoost runtime library, runs as a non-root user, honors a platform-provided `PORT` (default `8000`), and exposes a `/health` container health check. If `model/xgb.json` is not present in the build context, the image trains the synthetic model during the build. The named volume keeps `/log` observations across container replacements.
+
+Set `JALSA_FRONTEND_ORIGIN` to the deployed frontend origin. Do not expose `/log` or `/retrain` publicly without adding authentication; CSV storage is intended for a single container, not concurrent multi-instance deployment.
+
 ## API endpoints
 
 ### GET /

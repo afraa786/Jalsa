@@ -304,7 +304,7 @@ export default function MetroHero({
     <section
       ref={sectionRef}
       className={`scroll-locked-hero ${className}`.trim()}
-      style={{ backgroundColor: "#05070d", ...style }}
+      style={{ backgroundColor: "#05070d", touchAction: loopPlayback ? "pan-y" : "none", ...style }}
       aria-label="JALSA crowd-intelligence introduction"
     >
       <video
