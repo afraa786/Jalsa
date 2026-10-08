@@ -1,0 +1,5 @@
+JALSA uses a **Next.js and TypeScript frontend** backed by a **FastAPI service**. The frontend calls typed REST endpoints for predictions, daily forecasts, heatmaps, festivals, and model metrics. The backend is packaged in a Docker image with a health check, non-root runtime, configurable port and CORS origin, and persistent storage for logged readings.
+
+The prediction model is a four-class **XGBoost** classifier: Low, Moderate, High, and Very High. Training uses 50,000 synthetic scenarios by default, generated from crowd patterns that account for hour, weekday, zone, rain, and festival effects. Features include cyclical encodings for hour and day of week. When at least 150 valid real observations are logged, training blends them with five-times sample weight.
+
+For uncertainty, predictions include **5,000 Monte Carlo samples**, with P10/P50/P90 estimates and the probability of high-or-higher activity. The API also supports zone configuration, festival listings, CSV observation logging, persisted metrics, and background retraining. Synthetic test accuracy is explicitly labeled as simulator performance, not established real-world accuracy.
