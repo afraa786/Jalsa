@@ -5,6 +5,34 @@ import { getFestivals, getHealth, getMetrics, getZones, logReading, retrainModel
 import type { Festival, ModelMetrics, ServiceHealth, ZoneInfo } from "@/types/jalsa";
 
 const numberFormat = new Intl.NumberFormat("en-IN");
+const MARKET_ZONE = "main_market";
+const MARKET_NAME = "Vaishali Nagar Market";
+
+interface FestivalGroup {
+  name: string;
+  startDate: string;
+  endDate: string;
+  days: number;
+}
+
+function groupFestivals(festivals: Festival[]): FestivalGroup[] {
+  const groups = new Map<string, FestivalGroup>();
+  for (const festival of festivals) {
+    const group = groups.get(festival.name);
+    if (group) {
+      group.endDate = festival.date;
+      group.days += 1;
+    } else {
+      groups.set(festival.name, {
+        name: festival.name,
+        startDate: festival.date,
+        endDate: festival.date,
+        days: 1,
+      });
+    }
+  }
+  return [...groups.values()];
+}
 
 export function ProjectOverview() {
   const [zones, setZones] = useState<ZoneInfo | null>(null);
@@ -26,8 +54,13 @@ export function ProjectOverview() {
       if (!active) return;
       const [zoneResult, festivalResult, metricsResult, healthResult] = results;
       if (zoneResult.status === "fulfilled") {
-        setZones(zoneResult.value);
-        setPlace(zoneResult.value.places[0]?.name ?? "");
+        const marketPlaces = zoneResult.value.places.filter((item) => item.name === MARKET_NAME && item.zone === MARKET_ZONE);
+        setZones({
+          ...zoneResult.value,
+          zones: zoneResult.value.zones.filter((item) => item === MARKET_ZONE),
+          places: marketPlaces,
+        });
+        setPlace(marketPlaces[0]?.name ?? "");
       }
       if (festivalResult.status === "fulfilled") setFestivals(festivalResult.value);
       if (metricsResult.status === "fulfilled") setMetrics(metricsResult.value);
@@ -42,6 +75,7 @@ export function ProjectOverview() {
   }, []);
 
   const selectedPlace = zones?.places.find((item) => item.name === place);
+  const upcomingFestivals = groupFestivals(festivals).slice(0, 3);
 
   async function submitReading(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -101,13 +135,13 @@ export function ProjectOverview() {
           <div className="overview-rule" />
           <div className="overview-split">
             <div>
-              <h3>Monitored areas</h3>
-              {zones?.zones.map((item) => <span className="overview-tag" key={item}>{item.replaceAll("_", " ")}</span>)}
+              <h3>Monitored area</h3>
+              <span className="overview-tag">{MARKET_NAME}</span>
             </div>
             <div>
               <h3>Upcoming festivals</h3>
-              {festivals.length ? festivals.slice(0, 3).map((item) => (
-                <p className="overview-event" key={`${item.date}-${item.name}`}><strong>{item.name}</strong><span>{item.date}</span></p>
+              {upcomingFestivals.length ? upcomingFestivals.map((item) => (
+                <p className="overview-event" key={`${item.startDate}-${item.name}`}><strong>{item.days === 9 && item.name === "Navratri" ? "Navratri · 9 days" : item.name}</strong><span>{item.days > 1 ? `${item.startDate} – ${item.endDate}` : item.startDate}</span></p>
               )) : <p className="overview-muted">{loading ? "Loading events…" : "No upcoming events configured."}</p>}
             </div>
           </div>
@@ -121,7 +155,7 @@ export function ProjectOverview() {
             <div><span>Logged real readings</span><strong>{metrics ? numberFormat.format(metrics.real_data_rows) : "—"}</strong></div>
             <div><span>Real-data blend</span><strong>{metrics ? (metrics.real_data_blended ? `${metrics.real_data_weight}× weight` : "Not blended") : "—"}</strong></div>
           </div>
-          <p className="overview-note">Synthetic scenarios vary by hour, weekday, zone, rain, and configured festival effects. Valid place readings are blended after the 150-reading threshold; live counts are not claimed.</p>
+          <p className="overview-note">Synthetic scenarios vary by hour, weekday, zone, rain, and configured festival effects. This page’s forecasts and logged place are restricted to Vaishali Nagar Market; model metrics describe the training set.</p>
           <p className="overview-muted">Current data: {metrics?.real_data_rows ? "logged place-level busyness signals" : "no logged observations in the current training metrics"}.</p>
         </article>
 

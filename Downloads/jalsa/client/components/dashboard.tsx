@@ -5,12 +5,23 @@ import { getFestivals, getForecast, getHeatmap, getPrediction, getZones } from "
 import type { CrowdLevel, Festival, Heatmap, HourForecast, Prediction } from "@/types/jalsa";
 
 const LEVELS: CrowdLevel[] = ["Low", "Moderate", "High", "Very High"];
+const MARKET_ZONE = "main_market";
+const MARKET_NAME = "Vaishali Nagar Market";
 const LEVEL_COLORS: Record<CrowdLevel, string> = {
   Low: "#69212c",
   Moderate: "#8c2432",
   High: "#b32d3d",
   "Very High": "#d74755",
 };
+const HEATMAP_COLORS = ["#f8cf98", "#eaa360", "#d87932", "#a44d17", "#582208"];
+
+function heatmapColor(value: number) {
+  if (value < 20) return HEATMAP_COLORS[0];
+  if (value < 40) return HEATMAP_COLORS[1];
+  if (value < 60) return HEATMAP_COLORS[2];
+  if (value < 80) return HEATMAP_COLORS[3];
+  return HEATMAP_COLORS[4];
+}
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short" }).format(
@@ -47,10 +58,8 @@ function ForecastChart({ data, selectedDate }: { data: HourForecast[]; selectedD
 }
 
 export function Dashboard() {
-  const [zones, setZones] = useState<string[]>([]);
   const [places, setPlaces] = useState<Array<{ name: string; zone: string }>>([]);
   const [festival, setFestival] = useState<Festival | null>(null);
-  const [zone, setZone] = useState("main_market");
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [hour, setHour] = useState(19);
   const [rain, setRain] = useState(false);
@@ -67,8 +76,7 @@ export function Dashboard() {
       try {
         const [zoneInfo, festivalData] = await Promise.all([getZones(), getFestivals()]);
         if (!active) return;
-        setZones(zoneInfo.zones);
-        setPlaces(zoneInfo.places);
+        setPlaces(zoneInfo.places.filter((place) => place.name === MARKET_NAME && place.zone === MARKET_ZONE));
         setFestival(festivalData[0] ?? null);
       } catch (requestError) {
         if (active) setError(requestError instanceof Error ? requestError.message : "Unable to load JALSA data");
@@ -86,9 +94,9 @@ export function Dashboard() {
     async function loadForecasts() {
       try {
         const [day, currentPrediction, currentHeatmap] = await Promise.all([
-          getForecast(zone, selectedDate, rain),
-          getPrediction(zone, selectedDate, hour, rain),
-          getHeatmap(zone, selectedDate, 7, rain),
+          getForecast(MARKET_ZONE, selectedDate, rain),
+          getPrediction(MARKET_ZONE, selectedDate, hour, rain),
+          getHeatmap(MARKET_ZONE, selectedDate, 7, rain),
         ]);
         if (!active) return;
         setForecast(day);
@@ -100,7 +108,7 @@ export function Dashboard() {
     }
     loadForecasts();
     return () => { active = false; };
-  }, [zone, selectedDate, hour, rain, retryKey]);
+  }, [selectedDate, hour, rain, retryKey]);
 
   const currentHour = useMemo(
     () => forecast?.hourly.find((item) => item.hour === hour) ?? forecast?.hourly[0],
@@ -112,7 +120,7 @@ export function Dashboard() {
   return (
     <div className="dashboard">
       <section className="controls" aria-label="Forecast controls">
-        <label>Zone<select value={zone} onChange={(event) => setZone(event.target.value)}>{zones.map((item) => <option key={item} value={item}>{item.replaceAll("_", " ")}</option>)}</select></label>
+        <div className="market-control"><span>Market</span><strong>{MARKET_NAME}</strong></div>
         <label>Date<input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} /></label>
         <label>Hour<select value={hour} onChange={(event) => setHour(Number(event.target.value))}>{Array.from({ length: 17 }, (_, index) => index + 7).map((item) => <option key={item} value={item}>{item}:00</option>)}</select></label>
         <label className="toggle"><input type="checkbox" checked={rain} onChange={(event) => setRain(event.target.checked)} /><span>Rain conditions</span></label>
@@ -143,8 +151,8 @@ export function Dashboard() {
             </article>
             <article className="card">
               <span className="card-label">Places in zone</span>
-              <strong>{places.filter((place) => place.zone === zone).length}</strong>
-              <p>{places.filter((place) => place.zone === zone).map((place) => place.name).join(", ")}</p>
+              <strong>{places.length}</strong>
+              <p>{places.map((place) => place.name).join(", ")}</p>
             </article>
           </section>
 
@@ -162,14 +170,15 @@ export function Dashboard() {
           </section>
 
           <section className="card heatmap-card" id="heatmap">
-            <div className="card-heading"><div><span className="card-label">14-day outlook</span><h2>Area activity heatmap</h2></div><span className="note">{zone.replaceAll("_", " ")}</span></div>
+            <div className="card-heading"><div><span className="card-label">14-day outlook</span><h2>Area activity heatmap</h2></div><span className="note">{MARKET_NAME}</span></div>
             <div className="heatmap-scroll">
               <div className="heatmap-grid">
                 <span className="corner">Date</span>
                 {heatmap?.data[0]?.hours.map((hour) => <span key={hour} className="hour-label">{hour}</span>)}
-                {heatmap?.data.map((day) => <div className="row" key={day.date}><span>{formatDate(day.date).split(" ")[0]}<small>{day.date.slice(8)}</small></span>{day.expected_crowd.map((value, index) => <i key={index} style={{ background: `rgba(175,38,54,${0.14 + value / 100 * 0.75})` }} title={`${value}%`} />)}</div>)}
+                {heatmap?.data.map((day) => <div className="row" key={day.date}><span>{formatDate(day.date).split(" ")[0]}<small>{day.date.slice(8)}</small></span>{day.expected_crowd.map((value, index) => <i key={index} style={{ background: heatmapColor(value) }} title={`${value}%`} />)}</div>)}
               </div>
             </div>
+            <div className="heatmap-legend"><span>Low</span><i aria-hidden="true" /><span>High</span></div>
           </section>
         </>
       )}
