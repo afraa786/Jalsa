@@ -22,6 +22,13 @@ def test_zones():
         assert "levels" in body
 
 
+def test_render_frontend_origin_is_normalized(monkeypatch):
+    monkeypatch.setenv("JALSA_FRONTEND_ORIGIN", "https://jalsa-zeta.vercel.app/ ")
+    monkeypatch.setenv("JALSA_FRONTEND_ORIGINS", "https://legacy.example")
+
+    assert api.configured_frontend_origins() == {"https://jalsa-zeta.vercel.app"}
+
+
 def test_navratri_is_listed_for_nine_consecutive_days():
     with TestClient(api.app) as client:
         response = client.get("/festivals", params={"upcoming_only": "false"})

@@ -48,12 +48,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-frontend_origins = os.getenv("JALSA_FRONTEND_ORIGINS", "http://localhost:3000")
-allowed_origins = {
-    origin.strip()
-    for origin in frontend_origins.split(",")
-    if origin.strip()
-}
+def configured_frontend_origins() -> set[str]:
+    configured = (
+        os.getenv("JALSA_FRONTEND_ORIGIN")
+        or os.getenv("JALSA_FRONTEND_ORIGINS")
+        or "http://localhost:3000"
+    )
+    return {
+        origin
+        for value in configured.split(",")
+        if (origin := value.strip().rstrip("/"))
+    }
+
+
+allowed_origins = configured_frontend_origins()
 allowed_origins.update({
     "http://127.0.0.1:3000",
     "http://localhost:3000",
